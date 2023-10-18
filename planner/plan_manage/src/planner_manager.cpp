@@ -104,19 +104,13 @@ namespace ego_planner
         t_seg.setConstant(t_step);
         pos.col(0) = start_pt;
         double ti = global_data_.last_progress_time_;
-        // std::cout << "generate trajectory first12" << std::endl;
         for (int i = 1; i < pos_num; i++)
         {
           ti += t_step;
-          // std::cout << "time is " << time << std::endl;
-          // std::cout << "i*t_step is " << i*t_step << std::endl;
-          // std::cout << "global_data_.getPosition(ti) is " << global_data_.getPosition(ti) << std::endl;
-          // std::cout << "gl_traj_random.evaluate is " << gl_traj_random.evaluate(i*t_step) << std::endl;
+
           pos.col(i) = (global_data_.getPosition(ti) + gl_traj_random.evaluate(i*t_step))/2;
-          // pos.col(i) = gl_traj_random.evaluate(i*t_step);
-          // display_points.push_back(pos.col(i));
+
         }
-        // display_points.push_back(local_target_pt);
         gl_traj = PolynomialTraj::minSnapTraj(pos, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), t_seg);
 
         bool flag_too_far;

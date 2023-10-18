@@ -160,7 +160,7 @@ namespace ego_planner
 
     Eigen::Vector4d temp_pose_1;
     temp_pose_1 << msg->poses[0].pose.position.x, msg->poses[0].pose.position.y, 1.0, 2;
-    wp_record.recordWaypoint(temp_pose_1);
+    // wp_record.recordWaypoint(temp_pose_1);
 
     trigger_by_one_waypoint(temp_pose);
   }
@@ -373,6 +373,7 @@ namespace ego_planner
       }
       else if ((end_pt_ - pos).norm() < no_replan_thresh_)
       {
+        have_target_ = false;
         // cout << "near end" << endl;
         return;
       }

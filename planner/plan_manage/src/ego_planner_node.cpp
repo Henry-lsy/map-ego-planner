@@ -7,8 +7,10 @@
 
 using namespace ego_planner;
 
-std::vector<Eigen::Vector4d> readWaypointsFromFile(const std::string & path)
+std::vector<Eigen::Vector4d> readWaypointsFromFile(const std::string & path, std::vector<int> & staywaypoints_index)
 {
+    staywaypoints_index.clear();
+    
     std::vector<Eigen::Vector4d> waypoints;
     Eigen::Vector4d waypoint;
 
@@ -20,6 +22,10 @@ std::vector<Eigen::Vector4d> readWaypointsFromFile(const std::string & path)
       waypoint(1) = node[i]["y"].as<double>();
       waypoint(2) = node[i]["z"].as<double>();
       waypoint(3) = node[i]["yaw"].as<double>();
+      if(node[i]["stay"].as<bool>())
+      {
+        staywaypoints_index.push_back(i);
+      }
       waypoints.push_back(waypoint);
     }
     return waypoints;
@@ -29,7 +35,7 @@ ros::Publisher waypoints_pub;
 ros::Publisher ref_yaw_pub;
 
 
-void visualize(const std::vector<Eigen::Vector4d> &waypoints)
+void visualize(const std::vector<Eigen::Vector4d> &waypoints, double scale=0.1)
 {
     visualization_msgs::Marker wayPointsMarker;
 
@@ -44,7 +50,7 @@ void visualize(const std::vector<Eigen::Vector4d> &waypoints)
     wayPointsMarker.color.g = 0.00;
     wayPointsMarker.color.b = 0.00;
     wayPointsMarker.color.a = 1.00;
-    wayPointsMarker.scale.x = 0.1;
+    wayPointsMarker.scale.x = scale;
 
 
     if (waypoints.size() > 0)
@@ -102,29 +108,44 @@ int main(int argc, char **argv)
   waypoints_pub = nh.advertise<visualization_msgs::Marker>("/visualizer/stay_waypoints", 10);
   ref_yaw_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/planning/yaw", 10);
 
-  std::vector<Eigen::Vector4d> stay_waypoints;
-  stay_waypoints = readWaypointsFromFile(waypoint_file);
+  std::vector<Eigen::Vector4d> all_waypoints;
+  std::vector<int> stay_waypoints_index;
+  all_waypoints = readWaypointsFromFile(waypoint_file, stay_waypoints_index);
 
-  if(stay_waypoints.empty())
+  if(all_waypoints.empty())
   {
     std::cout << "No waypoints in the file. Something goes wrong!" << std::endl;
     return 0;
   }
 
+  //extract stay waypoint
+  std::vector<Eigen::Vector4d> stay_waypoints;
+  for(auto index: stay_waypoints_index)
+  {
+    if(index>=0 && index < all_waypoints.size())
+    {
+      stay_waypoints.push_back(all_waypoints[index]);
+    }
+    else
+    {
+      std::cout << "Invalid index: " << index << std::endl;
+    }
+  }
+
   // ego planner start
   EGOReplanFSM rebo_replan;
   rebo_replan.init(nh);
-  auto it =  stay_waypoints.begin();
+  auto it =  all_waypoints.begin();
   while(ros::ok())
   {
-    if(it == stay_waypoints.end())
+    if(it == all_waypoints.end())
     {
-      it =  stay_waypoints.begin();
+      it =  all_waypoints.begin();
     }
-    visualize(stay_waypoints);
-    if(!rebo_replan.if_have_target() && it != stay_waypoints.end())
+    visualize(stay_waypoints, 0.3);
+    visualize(all_waypoints);
+    if(!rebo_replan.if_have_target() && it != all_waypoints.end())
     {
-
       // wait for 2 seconds
 
       // take a photo in here

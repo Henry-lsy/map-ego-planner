@@ -76,16 +76,20 @@ int main(int argc, char** argv)
     char key;
     while(ros::ok())
     {
-        std::cout << "press any key to record one waypoint. Press \"q\" to exit." << std::endl;
+        std::cout << "press key to record one waypoint. Press \"s\" to stay. Press \"d\" to not stay. \"q\" to exit." << std::endl;
         std::cin >> key;
         if(key == 'q')
         {
            waypoint_recorder.writeWaypointsToFile(file_path);
            return 0;
         }
-        else
+        else if(key == 's')
         {
-            waypoint_recorder.recordWaypoint(waypoint);
+            waypoint_recorder.recordWaypoint(waypoint, true);
+        }
+        else if(key == 'd')
+        {
+            waypoint_recorder.recordWaypoint(waypoint, false);
         }
         ros::spinOnce();
         r.sleep();

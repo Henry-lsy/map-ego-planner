@@ -106,14 +106,7 @@ namespace ego_planner
     void waypointCallback(const nav_msgs::PathConstPtr &msg);
     void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
     bool calculateGlobalPath(const Eigen::Vector3d & goal_wp);
-
-    inline void publishYaw(const Eigen::Vector4d& waypoint_yaw)
-    {
-      
-    }
     
-
-
     bool checkCollision();
 
   public:
@@ -130,6 +123,7 @@ namespace ego_planner
     {
       return have_target_;
     }
+
     bool planPathWithFrontEnd(const Eigen::Vector3d & pose);
     void trigger_by_one_waypoint(const Eigen::Vector3d & pose);
 

@@ -35,11 +35,9 @@
   <arg name="point4_z"/>
 
   <arg name="flight_type"/>
-  <!-- <arg name="waypoint_file"/> -->
 
   <!-- main node -->
   <node pkg="ego_planner" name="ego_planner_node" type="ego_planner_node" output="screen">
-    <rosparam file="$(find global_planner)/config/global_planning.yaml" command="load" />
     <remap from="/odom_world" to="$(arg odometry_topic)"/>
     <remap from="/grid_map/odom" to="$(arg odometry_topic)"/>
     <remap from="/grid_map/cloud" to="$(arg cloud_topic)"/>
@@ -48,7 +46,6 @@
 
     <!-- planning fsm -->
     <param name="fsm/flight_type" value="$(arg flight_type)" type="int"/>
-    <!-- <param name="fsm/waypoint_file" value="$(arg waypoint_file)" type="string"/> -->
     <param name="fsm/thresh_replan" value="1.5" type="double"/>
     <param name="fsm/thresh_no_replan" value="2.0" type="double"/>
     <param name="fsm/planning_horizon" value="$(arg planning_horizon)" type="double"/> <!--always set to 1.5 times grater than sensing horizen-->

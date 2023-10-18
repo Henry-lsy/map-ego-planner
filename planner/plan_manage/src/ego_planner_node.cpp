@@ -128,7 +128,6 @@ int main(int argc, char **argv)
     }
   }
 
-
   // ego planner start
   EGOReplanFSM rebo_replan;
   rebo_replan.init(nh);
@@ -136,9 +135,8 @@ int main(int argc, char **argv)
   bool if_move = false;
   while(ros::ok())
   {
-
     visualize(stay_waypoints, 0.3);
-    visualize(move_waypoints);
+    // visualize(move_waypoints);
 
     if(it == all_waypoints.end())
     {
@@ -146,20 +144,13 @@ int main(int argc, char **argv)
     }
 
     if(if_move && rebo_replan.ifCloseToTarget(0.5))
-    // if(false)
     {
       
         Eigen::Vector3d target_pos(it->head<3>());
         ref_yaw_publish((*it)(3));
-        if(rebo_replan.planPathWithFrontEnd(target_pos))
+        if(rebo_replan.trigger_by_one_waypoint(target_pos))
         {
-          if(it != all_waypoints.end() - 1){
-            if_move = (*(it+1))(4) == 1 ? false : true;
-          }
-          else
-          {
-            if_move = false;
-          }
+          if_move = (*(it))(4) == 1 ? false : true;
           it++;
         }
     }
@@ -173,17 +164,12 @@ int main(int argc, char **argv)
 
       // trigger another waypoint
       // Eigen::Vector3d target_pos;
+        ros::Duration(2.0).sleep();
         Eigen::Vector3d target_pos(it->head<3>());
         ref_yaw_publish((*it)(3));
-        if(rebo_replan.planPathWithFrontEnd(target_pos))
+        if(rebo_replan.trigger_by_one_waypoint(target_pos))
         {
-          if(it != all_waypoints.end() - 1){
-            if_move = (*(it+1))(4) == 1 ? false : true;
-          }
-          else
-          {
-            if_move = false;
-          }
+          if_move = (*(it))(4) == 1 ? false : true;
           it++;
         }
     }

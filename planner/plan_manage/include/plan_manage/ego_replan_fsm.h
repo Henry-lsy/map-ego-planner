@@ -18,10 +18,7 @@
 #include <plan_manage/planner_manager.h>
 #include <traj_utils/planning_visualization.h>
 #include <plan_manage/yaml_util.hpp>
-
 #include <yaml-cpp/yaml.h>
-
-#include <global_planner.hpp>
 #include <cmath>
 
 using std::vector;
@@ -47,23 +44,19 @@ namespace ego_planner
     {
       MANUAL_TARGET = 1,
       PRESET_TARGET = 2,
-      REFENCE_PATH = 3,
-      READ_WPS_FROM_FILE = 4
+      REFENCE_PATH = 3
     };
 
     /* planning utils */
-    // global_planner::GlobalPlanner::Ptr global_planner_ptr_; 
     EGOPlannerManager::Ptr planner_manager_;
     PlanningVisualization::Ptr visualization_;
     ego_planner::DataDisp data_disp_;
 
     /* parameters */
-    int target_type_; // 1 mannual select, 2 hard code, 4 file
+    int target_type_; // 1 mannual select, 2 hard code
     double no_replan_thresh_, replan_thresh_;
-    double waypoints_[250][4];
-    double stay_waypoints_[50][4];
+    double waypoints_[50][3];
     int waypoint_num_;
-    int stay_waypoint_num_;
     double planning_horizen_, planning_horizen_time_;
     double emergency_time_;
 
@@ -106,12 +99,10 @@ namespace ego_planner
     void checkCollisionCallback(const ros::TimerEvent &e);
     void waypointCallback(const nav_msgs::PathConstPtr &msg);
     void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
-    bool calculateGlobalPath(const Eigen::Vector3d & goal_wp);
-    
+
     bool checkCollision();
 
   public:
-
     EGOReplanFSM(/* args */)
     {
     }
@@ -134,10 +125,9 @@ namespace ego_planner
       }
       return false;
     }
-    bool planPathWithFrontEnd(const Eigen::Vector3d & pose);
-    void trigger_by_one_waypoint(const Eigen::Vector3d & pose);
 
-    global_planner::GlobalPlanner::Ptr global_planner_ptr_; 
+    bool trigger_by_one_waypoint(const Eigen::Vector3d & pose);
+
     WaypointRecorder wp_record;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

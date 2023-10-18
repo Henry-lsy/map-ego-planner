@@ -42,7 +42,6 @@
       <param name="fill"          type="double" value="0.12"/>
       <param name="fractal"       type="int"    value="1"/>
       <param name="attenuation"   type="double" value="0.1"/>
-      <param name="pcd_path" value="/home/henry/scans_small.pcd"/>
   </node>
 
   <node pkg="so3_quadrotor_simulator" type="quadrotor_simulator_so3" name="quadrotor_simulator_so3" output="screen">

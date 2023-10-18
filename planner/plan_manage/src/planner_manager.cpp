@@ -41,7 +41,7 @@ namespace ego_planner
 
   bool EGOPlannerManager::reboundReplan(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
                                         Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,
-                                        Eigen::Vector3d local_target_vel, bool flag_polyInit, bool flag_randomPolyTraj, double rand_range)
+                                        Eigen::Vector3d local_target_vel, bool flag_polyInit, bool flag_randomPolyTraj)
   {
 
     static int count = 0;
@@ -74,45 +74,35 @@ namespace ego_planner
 
       if (flag_first_call || flag_polyInit || flag_force_polynomial /*|| ( start_pt - local_target_pt ).norm() < 1.0*/) // Initial path generated from a min-snap traj by order.
       {
-        double dist = (start_pt - local_target_pt).norm();
-        double time = global_data_.end_t_;
-
-        // std::cout << "generate trajectory first" << std::endl;
-        PolynomialTraj gl_traj_random;
         flag_first_call = false;
         flag_force_polynomial = false;
-        double rand_time = time / 2 + (((double)rand()) / RAND_MAX - 0.5) * (time / 4);
-        Eigen::Vector3d random_inserted_pt = global_data_.getPosition(rand_time) + (((double)rand()) / RAND_MAX - 0.5) * rand_range * Eigen::Vector3d::Ones();
-        Eigen::MatrixXd pos_random(3, 3);
-        pos_random.col(0) = start_pt;
-        pos_random.col(1) = random_inserted_pt;
-        pos_random.col(2) = local_target_pt;
-        Eigen::VectorXd tt(2);
-        tt(0) = tt(1) = time / 2;
-
-        gl_traj_random = PolynomialTraj::minSnapTraj(pos_random, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), tt);
 
         PolynomialTraj gl_traj;
-         
-        int pos_num = 5;
-        double t;
 
-        Eigen::MatrixXd pos(3, pos_num);
-        vector<Eigen::Vector3d> display_points;
-        double t_step = time / (pos_num-1);
-        Eigen::VectorXd t_seg(pos_num-1);
-        t_seg.setConstant(t_step);
-        pos.col(0) = start_pt;
-        double ti = global_data_.last_progress_time_;
-        for (int i = 1; i < pos_num; i++)
+        double dist = (start_pt - local_target_pt).norm();
+        double time = pow(pp_.max_vel_, 2) / pp_.max_acc_ > dist ? sqrt(dist / pp_.max_acc_) : (dist - pow(pp_.max_vel_, 2) / pp_.max_acc_) / pp_.max_vel_ + 2 * pp_.max_vel_ / pp_.max_acc_;
+
+        if (!flag_randomPolyTraj)
         {
-          ti += t_step;
-
-          pos.col(i) = (global_data_.getPosition(ti) + gl_traj_random.evaluate(i*t_step))/2;
-
+          gl_traj = PolynomialTraj::one_segment_traj_gen(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
         }
-        gl_traj = PolynomialTraj::minSnapTraj(pos, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), t_seg);
+        else
+        {
+          Eigen::Vector3d horizen_dir = ((start_pt - local_target_pt).cross(Eigen::Vector3d(0, 0, 1))).normalized();
+          Eigen::Vector3d vertical_dir = ((start_pt - local_target_pt).cross(horizen_dir)).normalized();
+          Eigen::Vector3d random_inserted_pt = (start_pt + local_target_pt) / 2 +
+                                               (((double)rand()) / RAND_MAX - 0.5) * (start_pt - local_target_pt).norm() * horizen_dir * 0.8 * (-0.978 / (continous_failures_count_ + 0.989) + 0.989) +
+                                               (((double)rand()) / RAND_MAX - 0.5) * (start_pt - local_target_pt).norm() * vertical_dir * 0.4 * (-0.978 / (continous_failures_count_ + 0.989) + 0.989);
+          Eigen::MatrixXd pos(3, 3);
+          pos.col(0) = start_pt;
+          pos.col(1) = random_inserted_pt;
+          pos.col(2) = local_target_pt;
+          Eigen::VectorXd t(2);
+          t(0) = t(1) = time / 2;
+          gl_traj = PolynomialTraj::minSnapTraj(pos, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), t);
+        }
 
+        double t;
         bool flag_too_far;
         ts *= 1.5; // ts will be divided by 1.5 in the next
         do
@@ -133,18 +123,14 @@ namespace ego_planner
             point_set.push_back(pt);
           }
         } while (flag_too_far || point_set.size() < 7); // To make sure the initial path has enough points.
-
-        
         t -= ts;
         start_end_derivatives.push_back(gl_traj.evaluateVel(0));
         start_end_derivatives.push_back(local_target_vel);
         start_end_derivatives.push_back(gl_traj.evaluateAcc(0));
         start_end_derivatives.push_back(gl_traj.evaluateAcc(t));
-        visualization_->displayInitPathList(point_set, 0.2, 0);
       }
       else // Initial path generated from previous trajectory.
       {
-        std::cout << "generate traj from first traj" << std::endl;
 
         double t;
         double t_cur = (ros::Time::now() - local_data_.start_time_).toSec();
@@ -492,7 +478,6 @@ namespace ego_planner
     {
       point_set.push_back(bspline.evaluateDeBoorT(time));
     }
-    std::cout << "I am here" << std::endl;
     UniformBspline::parameterizeToBspline(dt, point_set, start_end_derivative, ctrl_pts);
   }
 

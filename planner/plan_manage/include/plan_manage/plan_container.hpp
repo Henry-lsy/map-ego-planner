@@ -26,8 +26,6 @@ namespace ego_planner
     double time_increase_;
     double last_time_inc_;
     double last_progress_time_;
-    double last_last_progress_time_;
-    double end_t_;
 
     GlobalTrajData(/* args */) {}
 
@@ -76,10 +74,6 @@ namespace ego_planner
       }
       else
       {
-        if (local_traj_.size()==0)
-        {
-          std::cout << "Something is wrong here!!!" << std::endl;
-        }
         double tm, tmp;
         local_traj_[0].getTimeSpan(tm, tmp);
         return local_traj_[0].evaluateDeBoor(tm + t - local_start_time_);

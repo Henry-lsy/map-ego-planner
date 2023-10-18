@@ -24,6 +24,7 @@ double ref_yaw = -100;
 // yaw control
 double last_yaw_, last_yaw_dot_;
 double time_forward_;
+double current_yaw_weight_;
 
 void bsplineCallback(ego_planner::BsplineConstPtr msg)
 {
@@ -47,15 +48,6 @@ void bsplineCallback(ego_planner::BsplineConstPtr msg)
   UniformBspline pos_traj(pos_pts, msg->order, 0.1);
   pos_traj.setKnot(knots);
 
-  // parse yaw traj
-
-  // Eigen::MatrixXd yaw_pts(msg->yaw_pts.size(), 1);
-  // for (int i = 0; i < msg->yaw_pts.size(); ++i) {
-  //   yaw_pts(i, 0) = msg->yaw_pts[i];
-  // }
-
-  //UniformBspline yaw_traj(yaw_pts, msg->order, msg->yaw_dt);
-
   start_time_ = msg->start_time;
   traj_id_ = msg->traj_id;
 
@@ -74,7 +66,6 @@ void yawCallback(const quadrotor_msgs::PositionCommandPtr msg)
 {
   // parse pos traj
   ref_yaw = msg->yaw;
-  std::cout << "yaw is received::  " << ref_yaw << std::endl;
 }
 
 std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros::Time &time_now, ros::Time &time_last)
@@ -166,8 +157,8 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
   }
 
   if (fabs(yaw - last_yaw_) <= max_yaw_change)
-    yaw = 0.5 * last_yaw_ + 0.5 * yaw; // nieve LPF
-  yawdot = 0.5 * last_yaw_dot_ + 0.5 * yawdot;
+    yaw = (1-current_yaw_weight_) * last_yaw_ + (current_yaw_weight_) * yaw;
+  yawdot = (1-current_yaw_weight_) * last_yaw_dot_ + (current_yaw_weight_) * yawdot;
   last_yaw_ = yaw;
   last_yaw_dot_ = yawdot;
 
@@ -269,6 +260,8 @@ int main(int argc, char **argv)
   cmd.kv[2] = vel_gain[2];
 
   nh.param("traj_server/time_forward", time_forward_, -1.0);
+  nh.param("traj_server/current_yaw_weight", current_yaw_weight_, 0.5);
+
   last_yaw_ = 0.0;
   last_yaw_dot_ = 0.0;
 

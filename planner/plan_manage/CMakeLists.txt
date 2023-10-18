@@ -5,7 +5,7 @@ set(CMAKE_BUILD_TYPE "Release")
 ADD_COMPILE_OPTIONS(-std=c++11 )
 ADD_COMPILE_OPTIONS(-std=c++14 )
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
-set(YAML_CPP_LIBRARIES_CUSTOM "/usr/local/lib/libyaml-cpp.a")
+set(YAML_CPP_LIBRARIES_CUSTOM "/usr/lib/x86_64-linux-gnu/libyaml-cpp.a")
 
 find_package(Eigen3 REQUIRED)
 find_package(PCL 1.7 REQUIRED)

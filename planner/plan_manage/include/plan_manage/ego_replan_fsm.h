@@ -61,7 +61,7 @@ namespace ego_planner
     int target_type_; // 1 mannual select, 2 hard code, 4 file
     double no_replan_thresh_, replan_thresh_;
     double waypoints_[250][4];
-    double stay_waypoints_[50][4];
+ 
     int waypoint_num_;
     int stay_waypoint_num_;
     double planning_horizen_, planning_horizen_time_;
@@ -87,6 +87,7 @@ namespace ego_planner
     ros::Timer exec_timer_, safety_timer_;
     ros::Subscriber waypoint_sub_, odom_sub_;
     ros::Publisher replan_pub_, new_pub_, bspline_pub_, data_disp_pub_;
+    double rand_range_max_, rand_range_step_;
 
     /* helper functions */
     bool callReboundReplan(bool flag_use_poly_init, bool flag_randomPolyTraj); // front-end and back-end method
@@ -96,6 +97,10 @@ namespace ego_planner
     /* return value: std::pair< Times of the same state be continuously called, current continuously called state > */
     void changeFSMExecState(FSM_EXEC_STATE new_state, string pos_call);
     std::pair<int, EGOReplanFSM::FSM_EXEC_STATE> timesOfConsecutiveStateCalls();
+
+    std::vector<Eigen::VectorXd> all_waypoints;
+    std::vector<std::vector<Eigen::VectorXd>> current_block;
+
     void printFSMExecState();
 
     void planGlobalTrajbyGivenWps();
@@ -109,7 +114,7 @@ namespace ego_planner
     bool calculateGlobalPath(const Eigen::Vector3d & goal_wp);
     
     bool checkCollision();
-
+   
   public:
 
     EGOReplanFSM(/* args */)
@@ -125,7 +130,7 @@ namespace ego_planner
     {
       return have_target_;
     }
-
+    
     inline bool ifCloseToTarget(double distance)
     {
       if((odom_pos_-end_pt_).norm() < distance)
@@ -134,8 +139,11 @@ namespace ego_planner
       }
       return false;
     }
-    bool planPathWithFrontEnd(const Eigen::Vector3d & pose);
+
     void trigger_by_one_waypoint(const Eigen::Vector3d & pose);
+
+
+    void planGlobalTrajByOneBlock(const std::vector<Eigen::VectorXd>& block);
 
     global_planner::GlobalPlanner::Ptr global_planner_ptr_; 
     WaypointRecorder wp_record;

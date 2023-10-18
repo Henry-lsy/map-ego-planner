@@ -77,6 +77,24 @@ void visualize(const std::vector<Eigen::Vector4d> &waypoints, double scale=0.1)
     }
 }
 
+std::vector<std::vector<Eigen::VectorXd>> splitVectors(std::vector<Eigen::VectorXd> all_waypoints)
+{
+  std::vector<std::vector<Eigen::VectorXd>> blocks;
+  std::vector<Eigen::VectorXd> current_block;
+
+  for (const Eigen::VectorXd& waypoint : all_waypoints) 
+  {
+    current_block.push_back(waypoint);
+    if (waypoint(4) == 1 || &waypoint == &all_waypoints.back())
+    {
+      blocks.push_back(current_block);
+      current_block.clear();
+    }
+  }
+
+  return blocks;
+}
+
 void ref_yaw_publish(const double & ref_yaw)
 {
   quadrotor_msgs::PositionCommand cmd;
@@ -111,87 +129,33 @@ int main(int argc, char **argv)
     std::cout << "No waypoints in the file. Something goes wrong!" << std::endl;
     return 0;
   }
-
+  
+  std::vector<std::vector<Eigen::VectorXd>> blocks = splitVectors(all_waypoints);
   //extract stay waypoint
-  std::vector<Eigen::Vector4d> stay_waypoints;
-  std::vector<Eigen::Vector4d> move_waypoints;
-
-  for(auto waypoint: all_waypoints)
-  {
-    if(waypoint(4) == 1)
-    {
-      stay_waypoints.push_back(waypoint.head<4>());
-    }
-    else
-    {
-      move_waypoints.push_back(waypoint.head<4>());
-    }
-  }
-
 
   // ego planner start
   EGOReplanFSM rebo_replan;
   rebo_replan.init(nh);
-  auto it =  all_waypoints.begin();
-  bool if_move = false;
+
+  auto it =  blocks.begin();
   while(ros::ok())
   {
-
-    visualize(stay_waypoints, 0.3);
-    visualize(move_waypoints);
-
-    if(it == all_waypoints.end())
+    if(!rebo_replan.if_have_target() && !blocks.empty())
     {
-      it =  all_waypoints.begin();
-    }
+      ref_yaw_publish((*(it->end()-1))(3));
 
-    if(if_move && rebo_replan.ifCloseToTarget(0.5))
-    // if(false)
-    {
-      
-        Eigen::Vector3d target_pos(it->head<3>());
-        ref_yaw_publish((*it)(3));
-        if(rebo_replan.planPathWithFrontEnd(target_pos))
-        {
-          if(it != all_waypoints.end() - 1){
-            if_move = (*(it+1))(4) == 1 ? false : true;
-          }
-          else
-          {
-            if_move = false;
-          }
-          it++;
-        }
-    }
-    else if(!rebo_replan.if_have_target() && it != all_waypoints.end())
-    {
-      // wait for 2 seconds
+      rebo_replan.planGlobalTrajByOneBlock(*it);
 
-      // take a photo in here
+      it++;
 
-      // wait for 1 second
-
-      // trigger another waypoint
-      // Eigen::Vector3d target_pos;
-        Eigen::Vector3d target_pos(it->head<3>());
-        ref_yaw_publish((*it)(3));
-        if(rebo_replan.planPathWithFrontEnd(target_pos))
-        {
-          if(it != all_waypoints.end() - 1){
-            if_move = (*(it+1))(4) == 1 ? false : true;
-          }
-          else
-          {
-            if_move = false;
-          }
-          it++;
-        }
+      if (it == blocks.end()) { it = blocks.begin(); }
     }
 
     ros::spinOnce();
     r.sleep();
   }
-  // rebo_replan.wp_record.writeWaypointsToFile();
 
   return 0;
 }
+
+

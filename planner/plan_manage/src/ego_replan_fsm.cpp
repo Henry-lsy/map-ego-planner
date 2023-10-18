@@ -18,6 +18,9 @@ namespace ego_planner
     nh.param("fsm/planning_horizon", planning_horizen_, -1.0);
     nh.param("fsm/planning_horizen_time", planning_horizen_time_, -1.0);
     nh.param("fsm/emergency_time_", emergency_time_, 1.0);
+    nh.param("fsm/rand_range_step", rand_range_step_, 0.05);
+    nh.param("fsm/rand_range_max", rand_range_max_, 1.0);
+    
     /* initialize main modules */
     visualization_.reset(new PlanningVisualization(nh));
     planner_manager_.reset(new EGOPlannerManager);
@@ -81,7 +84,6 @@ namespace ego_planner
 
     if (success)
     {
-
       /*** display ***/
       constexpr double step_size_t = 0.1;
       int i_end = floor(planner_manager_->global_data_.global_duration_ / step_size_t);
@@ -95,13 +97,8 @@ namespace ego_planner
       have_target_ = true;
       have_new_target_ = true;
 
-      /*** FSM ***/
-      // if (exec_state_ == WAIT_TARGET)
       changeFSMExecState(GEN_NEW_TRAJ, "TRIG");
-      // else if (exec_state_ == EXEC_TRAJ)
-      //   changeFSMExecState(REPLAN_TRAJ, "TRIG");
 
-      // visualization_->displayGoalPoint(end_pt_, Eigen::Vector4d(1, 0, 0, 1), 0.3, 0);
       ros::Duration(0.001).sleep();
       visualization_->displayGlobalPathList(gloabl_traj, 0.1, 0);
       ros::Duration(0.001).sleep();
@@ -112,44 +109,7 @@ namespace ego_planner
     }
   }
 
-  bool EGOReplanFSM::calculateGlobalPath(const Eigen::Vector3d & goal_wp)
-  {
-    std::vector<Eigen::Vector3d> route;
-    bool success = false;
-    double t = 0.01;
 
-    std::cout << "odom_pos_ is " << odom_pos_ << std::endl;
-    std::cout << "goal_wp is " << goal_wp << std::endl;
-
-    do
-    {
-      if (global_planner_ptr_->if_collision(odom_pos_))
-      {
-        std::cout << "odom is in collision." << std::endl; 
-        return false;
-      }
-      if (global_planner_ptr_->if_collision(goal_wp))
-      {
-        std::cout << "goal waypoint is in collision." << std::endl;
-        return false;
-      }
-
-      success = global_planner_ptr_->planPath(odom_pos_, goal_wp, t, route);
-      t += 0.5;
-    }while(!success);
-    waypoint_num_ = route.size() - 1;
-    std::cout << "start point" << odom_pos_ << std::endl;
-    std::cout << "end point" << goal_wp << std::endl;
-    std::cout << "original waypoint_num_ =" << waypoint_num_ << std::endl;
-    global_planner_ptr_->visualizer.visualize(route);
-    for(int i = 0; i < waypoint_num_; i++)
-    {
-      waypoints_[i][0] = route[i+1](0);
-      waypoints_[i][1] = route[i+1](1);
-      waypoints_[i][2] = route[i+1](2);
-    }
-    return true;
-  }
 
   void EGOReplanFSM::waypointCallback(const nav_msgs::PathConstPtr &msg)
   {
@@ -165,20 +125,20 @@ namespace ego_planner
     trigger_by_one_waypoint(temp_pose);
   }
 
-  bool EGOReplanFSM::planPathWithFrontEnd(const Eigen::Vector3d & pose)
+
+  void EGOReplanFSM::planGlobalTrajByOneBlock(const std::vector<Eigen::VectorXd>& block)
   {
-    if(global_planner_ptr_->is_mapInitialized())
+    int i = 0;
+    waypoint_num_ = block.size();
+    for (const Eigen::VectorXd& waypoint : block) 
     {
-      std::cout << "goal is" << pose << std::endl;
-      
-      if (calculateGlobalPath(pose))
-      {
-        planGlobalTrajbyGivenWps();
-        return true;
-      }
+      waypoints_[i][0] = waypoint(0);
+      waypoints_[i][1] = waypoint(1);
+      waypoints_[i][2] = waypoint(2);
+      i++;
     }
-    std::cout << "global planning failure" << std::endl;
-    return false;
+    
+    planGlobalTrajbyGivenWps();
   }
 
   void EGOReplanFSM::trigger_by_one_waypoint(const Eigen::Vector3d & pose)
@@ -284,7 +244,12 @@ namespace ego_planner
         cout << "wait for goal." << endl;
       fsm_num = 0;
     }
-
+    if ((odom_pos_ - end_pt_).norm() < 0.2)
+    {
+      changeFSMExecState(WAIT_TARGET, "FSM");
+      have_target_ = false;
+      return;
+    }
     switch (exec_state_)
     {
     case INIT:
@@ -340,7 +305,6 @@ namespace ego_planner
 
     case REPLAN_TRAJ:
     {
-
       if (planFromCurrentTraj())
       {
         changeFSMExecState(EXEC_TRAJ, "FSM");
@@ -530,9 +494,9 @@ namespace ego_planner
     }
     else
     {
-      if (rand_range <= 1)
+      if (rand_range <= rand_range_max_)
       {
-         rand_range += 0.05;
+         rand_range += rand_range_step_;
       }
     }
     return plan_success;

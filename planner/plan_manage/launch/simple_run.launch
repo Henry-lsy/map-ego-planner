@@ -1,8 +1,8 @@
 <launch>
   <!-- size of map, change the size inflate x, y, z according to your application -->
-  <arg name="map_size_x" value="40.0"/>
+  <arg name="map_size_x" value="100.0"/>
   <arg name="map_size_y" value="40.0"/>
-  <arg name="map_size_z" value=" 2.0"/>
+  <arg name="map_size_z" value=" 3.0"/>
 
   <arg name="global_map_size_x" type="int" value="40"/>
   <arg name="global_map_size_y" type="int" value="40"/>
@@ -79,6 +79,7 @@
 
     <remap from="/odom_world" to="$(arg odom_topic)"/>
     <param name="traj_server/time_forward" value="1.0" type="double"/>
+    <param name="traj_server/current_yaw_weight" value="0.01" type="double"/>
   </node>
 
   <node pkg="waypoint_generator" name="waypoint_generator" type="waypoint_generator" output="screen">
@@ -116,7 +117,7 @@
     <param name="fractal"       type="int"    value="1"/>
     <param name="attenuation"   type="double" value="0.1"/>
     <remap from="/mock_map" to="/voxel_map"/>
-    <param name="pcd_path" value="/home/henry/scans_small.pcd"/>
+    <param name="pcd_path" value="/home/zrp/quzhou_data/test1.pcd"/>
   </node>
   
 </launch>

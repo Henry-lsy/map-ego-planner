@@ -63,6 +63,8 @@
     <param name="fsm/emergency_time" value="1.0" type="double"/>
     <param name="fsm/realworld_experiment" value="true"/>
     <param name="fsm/fail_safe" value="true"/>
+    <param name="fsm/rand_range_step" value="0.01" type="double"/>
+    <param name="fsm/rand_range_max" value="1.0" type="double"/>
 
     <param name="fsm/waypoint_num" value="$(arg point_num)" type="int"/>
     <param name="fsm/waypoint0_x" value="$(arg point0_x)" type="double"/>

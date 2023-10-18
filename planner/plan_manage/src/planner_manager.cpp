@@ -77,7 +77,6 @@ namespace ego_planner
         double dist = (start_pt - local_target_pt).norm();
         double time = global_data_.end_t_;
 
-        // std::cout << "generate trajectory first" << std::endl;
         PolynomialTraj gl_traj_random;
         flag_first_call = false;
         flag_force_polynomial = false;

@@ -1,0 +1,34 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/henry/quzhou_project/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/henry/quzhou_project/src/planner/bspline_opt/include/**",
+        "/home/henry/quzhou_project/src/planner/plan_manage/include/**",
+        "/home/henry/quzhou_project/src/planner/global_planner/include/**",
+        "/home/henry/quzhou_project/src/planner/mockamap/include/**",
+        "/home/henry/quzhou_project/src/uav_simulator/Utils/multi_map_server/include/**",
+        "/home/henry/quzhou_project/src/planner/path_searching/include/**",
+        "/home/henry/quzhou_project/src/planner/plan_env/include/**",
+        "/home/henry/quzhou_project/src/uav_simulator/Utils/pose_utils/include/**",
+        "/home/henry/quzhou_project/src/uav_simulator/Utils/quadrotor_msgs/include/**",
+        "/home/henry/quzhou_project/src/uav_simulator/so3_control/include/**",
+        "/home/henry/quzhou_project/src/uav_simulator/so3_quadrotor_simulator/include/**",
+        "/home/henry/quzhou_project/src/planner/traj_utils/include/**",
+        "/home/henry/quzhou_project/src/uav_simulator/Utils/uav_utils/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

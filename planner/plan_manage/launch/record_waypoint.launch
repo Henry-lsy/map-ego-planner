@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="ego_planner" name="waypoints_recorder_node" type="waypoints_recorder_node" output="screen">
+    <remap from="/odom" to="/ekf/ekf_odom_lidar"/>
+    <param name = "file_path" value="/home/nv/waypoints.yaml"/>
+  </node>
+
+</launch>

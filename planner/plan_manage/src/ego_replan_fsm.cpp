@@ -67,7 +67,7 @@ namespace ego_planner
     for (int i = 0; i < waypoint_num_; i++)
     {
       wps[i](0) = waypoints_[i][0];
-      wps[i](1) = waypoints_[i][1];
+      wps[i](1) = waypoints_[i][1]; 
       wps[i](2) = waypoints_[i][2];
       end_pt_ = wps.back();
     }
@@ -373,7 +373,6 @@ namespace ego_planner
       }
       else if ((end_pt_ - pos).norm() < no_replan_thresh_)
       {
-        have_target_ = false;
         // cout << "near end" << endl;
         return;
       }

@@ -22,6 +22,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <global_planner.hpp>
+#include <cmath>
 
 using std::vector;
 
@@ -110,6 +111,7 @@ namespace ego_planner
     bool checkCollision();
 
   public:
+
     EGOReplanFSM(/* args */)
     {
     }
@@ -124,6 +126,14 @@ namespace ego_planner
       return have_target_;
     }
 
+    inline bool ifCloseToTarget(double distance)
+    {
+      if((odom_pos_-end_pt_).norm() < distance)
+      {
+        return true;
+      }
+      return false;
+    }
     bool planPathWithFrontEnd(const Eigen::Vector3d & pose);
     void trigger_by_one_waypoint(const Eigen::Vector3d & pose);
 

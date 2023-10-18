@@ -7,12 +7,10 @@
 
 using namespace ego_planner;
 
-std::vector<Eigen::Vector4d> readWaypointsFromFile(const std::string & path, std::vector<int> & staywaypoints_index)
+std::vector<Eigen::VectorXd> readWaypointsFromFile(const std::string & path)
 {
-    staywaypoints_index.clear();
-    
-    std::vector<Eigen::Vector4d> waypoints;
-    Eigen::Vector4d waypoint;
+    std::vector<Eigen::VectorXd> waypoints;
+    Eigen::VectorXd waypoint(5);
 
     YAML::Node node = YAML::LoadFile(path);
     waypoints.reserve(node.size());
@@ -22,10 +20,7 @@ std::vector<Eigen::Vector4d> readWaypointsFromFile(const std::string & path, std
       waypoint(1) = node[i]["y"].as<double>();
       waypoint(2) = node[i]["z"].as<double>();
       waypoint(3) = node[i]["yaw"].as<double>();
-      if(node[i]["stay"].as<bool>())
-      {
-        staywaypoints_index.push_back(i);
-      }
+      waypoint(4) = node[i]["stay"].as<double>();
       waypoints.push_back(waypoint);
     }
     return waypoints;
@@ -108,9 +103,8 @@ int main(int argc, char **argv)
   waypoints_pub = nh.advertise<visualization_msgs::Marker>("/visualizer/stay_waypoints", 10);
   ref_yaw_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/planning/yaw", 10);
 
-  std::vector<Eigen::Vector4d> all_waypoints;
-  std::vector<int> stay_waypoints_index;
-  all_waypoints = readWaypointsFromFile(waypoint_file, stay_waypoints_index);
+  std::vector<Eigen::VectorXd> all_waypoints;
+  all_waypoints = readWaypointsFromFile(waypoint_file);
 
   if(all_waypoints.empty())
   {
@@ -120,31 +114,56 @@ int main(int argc, char **argv)
 
   //extract stay waypoint
   std::vector<Eigen::Vector4d> stay_waypoints;
-  for(auto index: stay_waypoints_index)
+  std::vector<Eigen::Vector4d> move_waypoints;
+
+  for(auto waypoint: all_waypoints)
   {
-    if(index>=0 && index < all_waypoints.size())
+    if(waypoint(4) == 1)
     {
-      stay_waypoints.push_back(all_waypoints[index]);
+      stay_waypoints.push_back(waypoint.head<4>());
     }
     else
     {
-      std::cout << "Invalid index: " << index << std::endl;
+      move_waypoints.push_back(waypoint.head<4>());
     }
   }
+
 
   // ego planner start
   EGOReplanFSM rebo_replan;
   rebo_replan.init(nh);
   auto it =  all_waypoints.begin();
+  bool if_move = false;
   while(ros::ok())
   {
+
+    visualize(stay_waypoints, 0.3);
+    visualize(move_waypoints);
+
     if(it == all_waypoints.end())
     {
       it =  all_waypoints.begin();
     }
-    visualize(stay_waypoints, 0.3);
-    visualize(all_waypoints);
-    if(!rebo_replan.if_have_target() && it != all_waypoints.end())
+
+    if(if_move && rebo_replan.ifCloseToTarget(0.5))
+    // if(false)
+    {
+      
+        Eigen::Vector3d target_pos(it->head<3>());
+        ref_yaw_publish((*it)(3));
+        if(rebo_replan.planPathWithFrontEnd(target_pos))
+        {
+          if(it != all_waypoints.end() - 1){
+            if_move = (*(it+1))(4) == 1 ? false : true;
+          }
+          else
+          {
+            if_move = false;
+          }
+          it++;
+        }
+    }
+    else if(!rebo_replan.if_have_target() && it != all_waypoints.end())
     {
       // wait for 2 seconds
 
@@ -154,10 +173,19 @@ int main(int argc, char **argv)
 
       // trigger another waypoint
       // Eigen::Vector3d target_pos;
-      Eigen::Vector3d target_pos(it->head<3>());
-      ref_yaw_publish((*it)(3));
-      if(rebo_replan.planPathWithFrontEnd(target_pos))
+        Eigen::Vector3d target_pos(it->head<3>());
+        ref_yaw_publish((*it)(3));
+        if(rebo_replan.planPathWithFrontEnd(target_pos))
+        {
+          if(it != all_waypoints.end() - 1){
+            if_move = (*(it+1))(4) == 1 ? false : true;
+          }
+          else
+          {
+            if_move = false;
+          }
           it++;
+        }
     }
 
     ros::spinOnce();

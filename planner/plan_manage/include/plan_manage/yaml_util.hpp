@@ -13,7 +13,7 @@ namespace YAML {
         double y;
         double z;
         double yaw;
-        bool stay;
+        double stay;
     };
 
     template<>
@@ -37,7 +37,7 @@ namespace YAML {
             rhs.y = node[1].as<double>();
             rhs.z = node[2].as<double>();
             rhs.yaw = node[3].as<double>();
-            rhs.stay = node[4].as<bool>();
+            rhs.stay = node[4].as<double>();
             return true;
         }
     };

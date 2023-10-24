@@ -62,7 +62,7 @@
     <remap from="/odom_world" to="$(arg odometry_topic)"/>
     <!-- <remap from="~planning/bspline" to = "/drone_$(arg drone_id)_planning/bspline"/> -->
     <!-- <remap from="~planning/data_display" to = "/drone_$(arg drone_id)_planning/data_display"/> -->
-    <rosparam file="$(find global_planner)/config/global_planning.yaml" command="load" />
+    <!-- <rosparam file="$(find global_planner)/config/global_planning.yaml" command="load" /> -->
 
     <remap from="/grid_map/odom" to="$(arg odometry_topic)"/>/
     <remap from="/grid_map/cloud" to="/cloud_registered"/>

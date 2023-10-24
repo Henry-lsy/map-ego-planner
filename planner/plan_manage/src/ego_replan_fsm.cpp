@@ -225,7 +225,12 @@ namespace ego_planner
         cout << "wait for goal." << endl;
       fsm_num = 0;
     }
-
+    if ((odom_pos_ - end_pt_).norm() < 0.2)
+    {
+      changeFSMExecState(WAIT_TARGET, "FSM");
+      have_target_ = false;
+      return;
+    }
     switch (exec_state_)
     {
     case INIT:
@@ -285,7 +290,6 @@ namespace ego_planner
 
     case REPLAN_TRAJ:
     {
-
       if (planFromCurrentTraj())
       {
         changeFSMExecState(EXEC_TRAJ, "FSM");

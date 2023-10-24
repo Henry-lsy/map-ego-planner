@@ -1,8 +1,8 @@
 <launch>
   <!-- size of map, change the size inflate x, y, z according to your application -->
-  <arg name="map_size_x" value="40.0"/>
+  <arg name="map_size_x" value="100.0"/>
   <arg name="map_size_y" value="40.0"/>
-  <arg name="map_size_z" value=" 2.0"/>
+  <arg name="map_size_z" value=" 3.0"/>
 
   <arg name="global_map_size_x" type="int" value="40"/>
   <arg name="global_map_size_y" type="int" value="40"/>

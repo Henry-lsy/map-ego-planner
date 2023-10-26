@@ -5,7 +5,7 @@ set(CMAKE_BUILD_TYPE "Release")
 ADD_COMPILE_OPTIONS(-std=c++11 )
 ADD_COMPILE_OPTIONS(-std=c++14 )
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
-set(YAML_CPP_LIBRARIES_CUSTOM "/usr/lib/x86_64-linux-gnu/libyaml-cpp.a")
+# set(YAML_CPP_LIBRARIES_CUSTOM "/usr/lib/x86_64-linux-gnu/libyaml-cpp.a")
 
 find_package(Eigen3 REQUIRED)
 find_package(PCL 1.7 REQUIRED)
@@ -61,7 +61,7 @@ add_executable(ego_planner_node
   src/planner_manager.cpp
   )
 target_link_libraries(ego_planner_node 
-  ${YAML_CPP_LIBRARIES_CUSTOM}
+  ${YAML_CPP_LIBRARIES}
   ${catkin_LIBRARIES}
   )
 add_dependencies(ego_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
@@ -76,7 +76,7 @@ add_executable(waypoints_recorder_node
   )
 
 target_link_libraries(waypoints_recorder_node 
-  ${YAML_CPP_LIBRARIES_CUSTOM}
+  ${YAML_CPP_LIBRARIES}
   ${catkin_LIBRARIES}
   )
 
